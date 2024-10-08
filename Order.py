@@ -50,3 +50,19 @@ class Order:
         self.lastUpdatesTimestamp = int(time.time())
 
         return True, self.price, (self.quantity - self.filledQuantity), self.side
+    
+    def modifyOrder(self, updatePrice):
+        if self.status in ["CANCELED", "PARTIALLY CANCELED"]:
+            print("Order already canceled!")
+            return False, None, None, None
+        
+        if self.status == "FILLED":
+            print("Order is already filled. Unable to modify the Order")
+            return False, None, None, None
+        
+        initialPrice = self.price
+        self.price = updatePrice
+
+        self.lastUpdatesTimestamp = int(time.time())
+
+        return True, initialPrice, (self.quantity - self.filledQuantity), self.side
