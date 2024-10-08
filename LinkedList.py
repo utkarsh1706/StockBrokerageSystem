@@ -19,6 +19,7 @@ class DoublyLinkedList:
             self.tail.next = new_node
             new_node.prev = self.tail
             self.tail = new_node
+        return new_node
 
     def remove(self, node):
         if node.prev:
