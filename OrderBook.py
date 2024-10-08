@@ -66,3 +66,18 @@ class OrderBook:
 
         self.orderNode[oid] = newNode
         return
+    
+    def getOrderBookData(self):
+        
+        bestBids = list(self.orderMapBid.items())[-5:]
+        bestAsks = list(self.orderMapAsk.items())[:5]
+
+        bids = [[price, quantity] for price, quantity in reversed(bestBids)]  # Highest bids first
+
+        asks = [[price, quantity] for price, quantity in bestAsks]  # Lowest asks first
+
+        # Return as a dictionary
+        return {
+            "bids": bids,
+            "asks": asks
+        }
