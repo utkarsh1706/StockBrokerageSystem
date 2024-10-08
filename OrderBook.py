@@ -11,48 +11,58 @@ class OrderBook:
         self.orderMapAsk = SortedDict()
         self.orderNode = {}
     
-    def generateOrderID(self):
-        pass
+    def _updateOrderMap(self, price_map, price, quantity):
+        if price in price_map:
+            price_map[price] += quantity
+        else:
+            price_map[price] = quantity
+        return
+    
+    def _removeOrderIfZero(self, price_map, price):
+        if price in price_map and price_map[price] == 0:
+            del price_map[price]
+        return
+    
+    def placeOrder(self, price, quantity, oid, side):
+        if side == "SELL":
+            self._updateOrderMap(self.orderMapAsk, price, quantity)
+            newNode = self.doubleLLAsk[price].append(oid, quantity)
+        else:
+            self._updateOrderMap(self.orderMapBid, price, quantity)
+            newNode = self.doubleLLBid[price].append(oid, quantity)
+        
+        self.orderNode[oid] = newNode
+        return
 
     def cancelOrder(self, price, unfilledQuantity, oid, side):
         nodePointer = self.orderNode[oid]
         del self.orderNode[oid]
+        
         if side == "SELL":
             self.orderMapAsk[price] -= unfilledQuantity
             self.doubleLLAsk[price].remove(nodePointer)
-            if self.orderMapAsk[price] == 0:
-                del self.orderMapAsk[price]
+            self._removeOrderIfZero(self.orderMapAsk, price)
         else:
             self.orderMapBid[price] -= unfilledQuantity
             self.doubleLLBid[price].remove(nodePointer)
-            if self.orderMapBid[price] == 0:
-                del self.orderMapBid[price]
+            self._removeOrderIfZero(self.orderMapBid, price)
         return
-    
+
     def modifyOrder(self, initialPrice, updatePrice, unfilledQuantity, side, oid):
         nodePointer = self.orderNode[oid]
-
+        
         if side == "SELL":
             self.orderMapAsk[initialPrice] -= unfilledQuantity
-            if updatePrice in self.orderMapAsk:
-                self.orderMapAsk[updatePrice] += unfilledQuantity
-            else:
-                self.orderMapAsk[updatePrice] = unfilledQuantity
+            self._updateOrderMap(self.orderMapAsk, updatePrice, unfilledQuantity)
             self.doubleLLAsk[initialPrice].remove(nodePointer)
             newNode = self.doubleLLAsk[updatePrice].append(oid, unfilledQuantity)
-            if self.orderMapAsk[initialPrice] == 0:
-                del self.orderMapAsk[initialPrice]
+            self._removeOrderIfZero(self.orderMapAsk, initialPrice)
         else:
             self.orderMapBid[initialPrice] -= unfilledQuantity
-            if updatePrice in self.orderMapBid:
-                self.orderMapBid[updatePrice] += unfilledQuantity
-            else:
-                self.orderMapBid[updatePrice] = unfilledQuantity
+            self._updateOrderMap(self.orderMapBid, updatePrice, unfilledQuantity)
             self.doubleLLBid[initialPrice].remove(nodePointer)
             newNode = self.doubleLLBid[updatePrice].append(oid, unfilledQuantity)
-            if self.orderMapBid[initialPrice] == 0:
-                del self.orderMapBid[initialPrice]
-        
+            self._removeOrderIfZero(self.orderMapBid, initialPrice)
+
         self.orderNode[oid] = newNode
-        
         return

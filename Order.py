@@ -4,6 +4,7 @@ import string
 
 class Order:
     def __init__(self, price, quantity, side, clientOrderId=None) -> None:
+        self.oid = self.generateOrderId()
         self.price = price
         self.quantity = quantity
         self.filledQuantity = 0
@@ -30,6 +31,12 @@ class Order:
     def generateClientID(self):
         timestamp = int(time.time())
         random_suffix = random.randint(1000, 9999)
+        random_letters = ''.join(random.choice(string.ascii_uppercase) for _ in range(2))
+        return f"CLIENTORD-{timestamp}-{random_letters}-{random_suffix}"
+    
+    def generateOrderId(self):
+        timestamp = int(time.time())
+        random_suffix = random.randint(100, 999)
         random_letters = ''.join(random.choice(string.ascii_uppercase) for _ in range(2))
         return f"ORD-{timestamp}-{random_letters}-{random_suffix}"
 
