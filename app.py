@@ -18,8 +18,7 @@ redis_client = Redis(host='localhost', port=6379)
 # Initialize the Limiter with default rate limiting settings and redis as the storage backend
 limiter = Limiter(get_remote_address, app=app, default_limits=["1000 per minute"], storage_uri="redis://localhost:6379")
 
-orderBook = OrderBook(20)
-orderDict = {}
+orderBook = OrderBook(20, socketio)
 
 @app.route('/api/place_order', methods=['POST'])
 @limiter.limit("100 per minute")
@@ -35,13 +34,13 @@ def placeOrderAPI():
     
     data['price'] = round(data['price'], pricePrecision)
 
-    isValid = checkValid(data['price'], data['quantity'], minOrderValue)
+    isValid, message = checkValid(data['price'], data['quantity'], minOrderValue, side)
 
     if not isValid:
-        return jsonify({"error": "Invalid Order"}), 400
+        return jsonify({"error": message}), 400
     
     newOrder = Order(data['price'], data['quantity'], side)
-    orderDict[newOrder.oid] = newOrder
+    orderBook.addOrderInfo(newOrder.oid, newOrder)
     orderBook.placeOrder(data['price'], data['quantity'], newOrder.oid, side)
     
     return jsonify({"status": "success", "order_id": newOrder.oid}), 201
@@ -57,7 +56,7 @@ def modifyOrderAPI():
     if not data or 'order_id' not in data or 'price' not in data:
         return jsonify({"error": "Invalid data"}), 400
     
-    order = orderDict.get(data['order_id'])
+    order = orderBook.getOrderInfo(data['order_id'])
     if not order:
         return jsonify({"error": "Invalid Order_ID"}), 400
     
@@ -81,7 +80,7 @@ def cancelOrderAPI():
     if not data or 'order_id' not in data:
         return jsonify({"error": "Invalid data"}), 400
     
-    order = orderDict.get(data['order_id'])
+    order = orderBook.getOrderInfo(data['order_id'])
     if not order:
         return jsonify({"error": "Invalid Order_ID"}), 400
     
@@ -105,7 +104,7 @@ def fetchOrderAPI():
     if not data or 'order_id' not in data:
         return jsonify({"error": "Invalid data"}), 400
     
-    order = orderDict.get(data['order_id'])
+    order = orderBook.getOrderInfo(data['order_id'])
     if not order:
         return jsonify({"error": "Invalid Order_ID"}), 400
     
