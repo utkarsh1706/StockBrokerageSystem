@@ -1,5 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_socketio import SocketIO
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from Order import Order
 from OrderBook import OrderBook
 import time
@@ -8,10 +10,14 @@ import threading
 app = Flask(__name__)
 socketio = SocketIO(app)
 
+# Initialize the Limiter with default rate limiting settings
+limiter = Limiter(get_remote_address, app=app, default_limits=["1000 per minute"])
+
 orderBook = OrderBook(20)
 orderDict = {}
 
 @app.route('/api/place_order', methods=['POST'])
+@limiter.limit("100 per minute")
 def placeOrderAPI():
     print("Received request for placing an order")
     data = request.json
@@ -28,6 +34,7 @@ def placeOrderAPI():
     return jsonify({"status": "success", "order_id": newOrder.oid}), 201
 
 @app.route('/api/modify_order', methods=['PUT'])
+@limiter.limit("100 per minute")
 def modifyOrderAPI():
     
     print("Received request for modifying an order")
@@ -51,6 +58,7 @@ def modifyOrderAPI():
     return jsonify({"success": True, "message": "Order modified successfully"}), 200
 
 @app.route('/api/cancel_order', methods=['DELETE'])
+@limiter.limit("100 per minute")
 def cancelOrderAPI():
     
     print("Received request for canceling an order")
