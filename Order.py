@@ -73,3 +73,13 @@ class Order:
         self.lastUpdatesTimestamp = int(time.time())
 
         return True, initialPrice, (self.quantity - self.filledQuantity), self.side
+    
+    def fetchOrder(self):
+        orderInfo = {
+            "order_price" : self.price,
+            "order_quantity" : self.quantity,
+            "average_traded_price" : self.averagePrice,
+            "traded_quantity" : self.filledQuantity,
+            "order_alive" : 1 if self.status in ["OPEN", "PARTIALLY FILLED"] else 0
+        }
+        return orderInfo

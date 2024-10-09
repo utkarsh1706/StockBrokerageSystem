@@ -84,6 +84,25 @@ def cancelOrderAPI():
 
     return jsonify({"success": True, "message": "Order canceled successfully"}), 200
 
+@app.route('/api/fetch_order', methods=['GET'])
+@limiter.limit("100 per minute")
+def fetchOrderAPI():
+    
+    print("Received request for fetching an order")
+    data = request.json
+    print("Data received:", data)
+
+    if not data or 'order_id' not in data:
+        return jsonify({"error": "Invalid data"}), 400
+    
+    order = orderDict.get(data['order_id'])
+    if not order:
+        return jsonify({"error": "Invalid Order_ID"}), 400
+    
+    orderInfo = order.fetchOrder()
+
+    return jsonify({"success": True, "data": orderInfo}), 200
+
 def sendOrderBookUpdates():
     while True:
         time.sleep(1) 
