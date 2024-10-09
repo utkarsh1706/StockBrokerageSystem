@@ -6,12 +6,15 @@ from Order import Order
 from OrderBook import OrderBook
 import time
 import threading
+from redis import Redis
 
 app = Flask(__name__)
 socketio = SocketIO(app)
 
-# Initialize the Limiter with default rate limiting settings
-limiter = Limiter(get_remote_address, app=app, default_limits=["1000 per minute"])
+redis_client = Redis(host='localhost', port=6379)
+
+# Initialize the Limiter with default rate limiting settings and redis as the storage backend
+limiter = Limiter(get_remote_address, app=app, default_limits=["1000 per minute"], storage_uri="redis://localhost:6379")
 
 orderBook = OrderBook(20)
 orderDict = {}
@@ -86,13 +89,16 @@ def sendOrderBookUpdates():
         time.sleep(1) 
         orderBookData = orderBook.getOrderBookData()
         socketio.emit('orderBook', {'data': orderBookData})
+        print("Emitting OrderBook")
 
 # Start the background thread when the Flask app starts
-@app.before_first_request
+@app.before_request
 def start_background_thread():
-    thread = threading.Thread(target=sendOrderBookUpdates)
-    thread.daemon = True
-    thread.start()
+    if not hasattr(start_background_thread, "thread_started"):
+        thread = threading.Thread(target=sendOrderBookUpdates)
+        thread.daemon = True
+        thread.start()
+        start_background_thread.thread_started = True
 
 @socketio.on('send_update') 
 def handle_send_update(message):
