@@ -18,7 +18,7 @@ redis_client = Redis(host='localhost', port=6379)
 # Initialize the Limiter with default rate limiting settings and redis as the storage backend
 limiter = Limiter(get_remote_address, app=app, default_limits=["1000 per minute"], storage_uri="redis://localhost:6379")
 
-orderBook = OrderBook(20, socketio)
+orderBook = None
 
 @app.route('/api/place_order', methods=['POST'])
 @limiter.limit("100 per minute")
@@ -127,6 +127,16 @@ def start_background_thread():
         thread.daemon = True
         thread.start()
         start_background_thread.thread_started = True
+    return
+
+@app.before_request
+def initialize_app():
+    global orderBook
+    if not hasattr(initialize_app, "initialized"):
+        bidLevels = (lastTradedPrice - (lowerCircuitPercent*lastTradedPrice)) * pow(10, pricePrecision)
+        askLevels = ((upperCircuitPercent*lastTradedPrice) - lastTradedPrice) * pow(10, pricePrecision)
+        orderBook = OrderBook(bidLevels, askLevels, socketio)
+        initialize_app.initialized = True
 
 @socketio.on('send_update') 
 def handle_send_update(message):

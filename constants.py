@@ -1,6 +1,10 @@
 pricePrecision = 2
+actualPricePrecision = pow(10, pricePrecision)
 quantityPrecision = 0
 minOrderValue = 5
+lastTradedPrice = 150
+lowerCircuitPercent = 10
+upperCircuitPercent = 10
 lowerCircuit = 100
 upperCircuit = 200
 lowerCircuitValid = False
