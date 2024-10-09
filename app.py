@@ -1,17 +1,26 @@
 from flask import Flask, jsonify, request
 from flask_socketio import SocketIO
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from Order import Order
 from OrderBook import OrderBook
 import time
 import threading
+from redis import Redis
 
 app = Flask(__name__)
 socketio = SocketIO(app)
+
+redis_client = Redis(host='localhost', port=6379)
+
+# Initialize the Limiter with default rate limiting settings and redis as the storage backend
+limiter = Limiter(get_remote_address, app=app, default_limits=["1000 per minute"], storage_uri="redis://localhost:6379")
 
 orderBook = OrderBook(20)
 orderDict = {}
 
 @app.route('/api/place_order', methods=['POST'])
+@limiter.limit("100 per minute")
 def placeOrderAPI():
     print("Received request for placing an order")
     data = request.json
@@ -28,6 +37,7 @@ def placeOrderAPI():
     return jsonify({"status": "success", "order_id": newOrder.oid}), 201
 
 @app.route('/api/modify_order', methods=['PUT'])
+@limiter.limit("100 per minute")
 def modifyOrderAPI():
     
     print("Received request for modifying an order")
@@ -51,6 +61,7 @@ def modifyOrderAPI():
     return jsonify({"success": True, "message": "Order modified successfully"}), 200
 
 @app.route('/api/cancel_order', methods=['DELETE'])
+@limiter.limit("100 per minute")
 def cancelOrderAPI():
     
     print("Received request for canceling an order")
@@ -78,13 +89,16 @@ def sendOrderBookUpdates():
         time.sleep(1) 
         orderBookData = orderBook.getOrderBookData()
         socketio.emit('orderBook', {'data': orderBookData})
+        print("Emitting OrderBook")
 
 # Start the background thread when the Flask app starts
-@app.before_first_request
+@app.before_request
 def start_background_thread():
-    thread = threading.Thread(target=sendOrderBookUpdates)
-    thread.daemon = True
-    thread.start()
+    if not hasattr(start_background_thread, "thread_started"):
+        thread = threading.Thread(target=sendOrderBookUpdates)
+        thread.daemon = True
+        thread.start()
+        start_background_thread.thread_started = True
 
 @socketio.on('send_update') 
 def handle_send_update(message):
