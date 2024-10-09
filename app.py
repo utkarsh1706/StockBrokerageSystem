@@ -7,6 +7,8 @@ from OrderBook import OrderBook
 import time
 import threading
 from redis import Redis
+from constants import *
+from helper import *
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -30,6 +32,14 @@ def placeOrderAPI():
         return jsonify({"error": "Invalid data"}), 400
 
     side = "SELL" if data['side'] == 1 else "BUY"
+    
+    data['price'] = round(data['price'], pricePrecision)
+
+    isValid = checkValid(data['price'], data['quantity'], minOrderValue)
+
+    if not isValid:
+        return jsonify({"error": "Invalid Order"}), 400
+    
     newOrder = Order(data['price'], data['quantity'], side)
     orderDict[newOrder.oid] = newOrder
     orderBook.placeOrder(data['price'], data['quantity'], newOrder.oid, side)

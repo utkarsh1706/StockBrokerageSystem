@@ -15,19 +15,6 @@ class Order:
         self.status = "OPEN"
         self.clientOrderId = clientOrderId if clientOrderId is not None else self.generateClientID()
 
-    def validation(self, price, quantity, minOrderValue, lowerCircuit, upperCircuit):
-        if price < lowerCircuit:
-            print("Lower Circuit")
-            return False
-        if price > upperCircuit:
-            print("Upper Circuit")
-            return False
-        if price * quantity < minOrderValue:
-            print("Minimum Order Value Condition not fulfilled!")
-            return False
-        
-        return True
-    
     def generateClientID(self):
         timestamp = int(time.time())
         random_suffix = random.randint(1000, 9999)
