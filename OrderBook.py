@@ -98,8 +98,14 @@ class OrderBook:
                 bestBidQuantity -= fillQuantity
 
                 # Move to the next nodes in the doubly linked lists if orders are filled
-                bestAskNode = bestAskNode.next if askOrder.status == "FILLED" else bestAskNode
-                bestBidNode = bestBidNode.next if bidOrder.status == "FILLED" else bestBidNode
+                if askOrder.status == "FILLED":
+                    tempNode = bestAskNode
+                    bestAskNode = bestAskNode.next
+                    self.doubleLLAsk[int((upperCircuit - bestAskPrice) * actualPricePrecision)].remove(tempNode)
+                if bidOrder.status == "FILLED":
+                    tempNode = bestBidNode
+                    bestBidNode = bestBidNode.next
+                    self.doubleLLBid[int((bestBidPrice - lowerCircuit) * actualPricePrecision)].remove(tempNode)
 
             # Update order maps if any order is partially filled
             if bestAskQuantity <= 0:
