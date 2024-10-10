@@ -63,7 +63,7 @@ class OrderBook:
         except StopIteration:
             return
 
-        while bestBidPrice >= bestAskPrice:
+        while bestBidPrice is not None and bestAskPrice is not None and bestBidPrice >= bestAskPrice:
             bestBidNode = self.doubleLLBid[int((bestBidPrice - lowerCircuit) * actualPricePrecision)].head
             bestAskNode = self.doubleLLAsk[int((upperCircuit - bestAskPrice) * actualPricePrecision)].head
 
@@ -82,16 +82,22 @@ class OrderBook:
                 bestAskNode = bestAskNode.next if askOrder.status == "FILLED" else bestAskNode
                 bestBidNode = bestBidNode.next if bidOrder.status == "FILLED" else bestBidNode
 
+            # Update order maps if any order is partially filled
+            if bestAskQuantity <= 0:
+                self.orderMapBid[bestBidPrice] = bestBidQuantity
+            if bestBidQuantity <= 0:
+                self.orderMapAsk[bestAskPrice] = bestAskQuantity
+
             # Move iteratorBid to the next price level only if bestBidNode is None
             if bestBidNode is None:
                 initPrice = bestBidPrice
-                bestBidPrice, bestBidQuantity = next(iteratorBid)
+                bestBidPrice, bestBidQuantity = next(iteratorBid, (None, None))
                 del self.orderMapBid[initPrice]
-                
+                    
             # Move iteratorAsk to the next price level only if bestAskNode is None
             if bestAskNode is None:
                 initPrice = bestAskPrice
-                bestAskPrice, bestAskQuantity = next(iteratorAsk)
+                bestAskPrice, bestAskQuantity = next(iteratorAsk, (None, None))
                 del self.orderMapAsk[initPrice]
 
         return
@@ -154,6 +160,6 @@ class OrderBook:
 
         # Return as a dictionary
         return {
-            "bids": bids,
-            "asks": asks
+            "asks": asks,
+            "bids": bids
         }
