@@ -16,6 +16,7 @@ class OrderBook:
         self.orderNode = {}
         self.orderInfo = {}
         self.ws = ws
+        self.trades = []
     
     def _updateOrderMap(self, price_map, price, quantity):
         if price in price_map:
@@ -44,7 +45,7 @@ class OrderBook:
 
     def sendTrade(self, price, fillQuantity, bidID, askID):
         
-        trade_data = {
+        tradeData = {
             "unique_id": generateTradeID(),
             "execution_timestamp": int(time.time()),
             "price": price,
@@ -53,9 +54,14 @@ class OrderBook:
             "ask_order_id": askID
         }
 
-        self.ws.emit("tradeUpdates", trade_data)
-        print("Emitted Trade Data:", trade_data)
+        self.trades.append(tradeData)
+
+        self.ws.emit("tradeUpdates", tradeData)
+        print("Emitted Trade Data:", tradeData)
         return
+    
+    def getAllTrades(self):
+        return self.trades
     
     def processOrder(self, askOrder, bidOrder, fillQuantity):
         price = bidOrder.price if askOrder.lastUpdatesTimestamp > bidOrder.lastUpdatesTimestamp else bidOrder.price

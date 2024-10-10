@@ -114,6 +114,18 @@ def fetchOrderAPI():
 
     return jsonify({"success": True, "data": orderInfo}), 200
 
+@app.route('/api/fetch_trades', methods=['GET'])
+@limiter.limit("100 per minute")
+def fetchTradesAPI():
+    
+    print("Received request for fetching all trades")
+    trades = orderBook.getAllTrades()
+
+    if not trades:
+        return jsonify({"success": True, "message": "No trades available", "data": []}), 200
+    
+    return jsonify({"success": True, "data": trades}), 200
+
 def sendOrderBookUpdates():
     while True:
         time.sleep(1) 
