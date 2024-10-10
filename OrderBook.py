@@ -3,7 +3,9 @@ from LinkedList import DoublyLinkedList
 from sortedcontainers import SortedDict
 from threading import Lock
 from Order import Order
+import time
 from constants import *
+from helper import *
 
 class OrderBook:
     def __init__(self, levels, ws) -> None:
@@ -39,6 +41,21 @@ class OrderBook:
         
         self.orderNode[oid] = newNode
         return
+
+    def sendTrade(self, price, fillQuantity, bidID, askID):
+        
+        trade_data = {
+            "unique_id": generateTradeID(),
+            "execution_timestamp": int(time.time()),
+            "price": price,
+            "qty": fillQuantity,
+            "bid_order_id": bidID,
+            "ask_order_id": askID
+        }
+
+        self.ws.emit("tradeUpdates", trade_data)
+        print("Emitted Trade Data:", trade_data)
+        return
     
     def processOrder(self, askOrder, bidOrder, fillQuantity):
         price = bidOrder.price if askOrder.lastUpdatesTimestamp > bidOrder.lastUpdatesTimestamp else bidOrder.price
@@ -51,6 +68,8 @@ class OrderBook:
         
         askOrder.status = "FILLED" if askOrder.filledQuantity == askOrder.quantity else "PARTIALLY FILLED"
         bidOrder.status = "FILLED" if bidOrder.filledQuantity == bidOrder.quantity else "PARTIALLY FILLED"
+
+        self.sendTrade(price, fillQuantity, bidOrder.oid, askOrder.oid)
 
         return
 
