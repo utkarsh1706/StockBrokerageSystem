@@ -43,6 +43,7 @@ def placeOrderAPI():
     newOrder = Order(data['price'], data['quantity'], side)
     orderBook.addOrderInfo(newOrder.oid, newOrder)
     orderBook.placeOrder(data['price'], data['quantity'], newOrder.oid, side)
+    orderBook.executeOrder()
     
     return jsonify({"status": "success", "order_id": newOrder.oid}), 201
 
@@ -118,7 +119,7 @@ def sendOrderBookUpdates():
         time.sleep(1) 
         orderBookData = orderBook.getOrderBookData()
         socketio.emit('orderBook', {'data': orderBookData})
-        print("Emitting OrderBook")
+        # print("Emitting OrderBook")
 
 # Start the background thread when the Flask app starts
 @app.before_request
