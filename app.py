@@ -118,6 +118,7 @@ def sendOrderBookUpdates():
     while True:
         time.sleep(1) 
         orderBookData = orderBook.getOrderBookData()
+        print(orderBookData)
         socketio.emit('orderBook', {'data': orderBookData})
         # print("Emitting OrderBook")
 
@@ -131,9 +132,8 @@ def initialize_and_start():
             lowerCircuitPrice = lastTradedPrice * (1 - lowerCircuitPercent)
             upperCircuitPrice = lastTradedPrice * (1 + upperCircuitPercent)
 
-            bidLevels = (lastTradedPrice - lowerCircuitPrice) * actualPricePrecision
-            askLevels = (upperCircuitPrice - lastTradedPrice) * actualPricePrecision
-            orderBook = OrderBook(int(bidLevels), int(askLevels), socketio)
+            levels = int((upperCircuitPrice - lowerCircuitPrice) * actualPricePrecision) + 1
+            orderBook = OrderBook(levels, socketio)
 
             # Start background thread for sending updates
             if not hasattr(initialize_and_start, "thread_started"):

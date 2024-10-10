@@ -6,9 +6,9 @@ from Order import Order
 from constants import *
 
 class OrderBook:
-    def __init__(self, bidlevels, asklevels, ws) -> None:
-        self.doubleLLAsk = np.array([DoublyLinkedList() for _ in range(asklevels)], dtype=object)
-        self.doubleLLBid = np.array([DoublyLinkedList() for _ in range(bidlevels)], dtype=object)
+    def __init__(self, levels, ws) -> None:
+        self.doubleLLAsk = np.array([DoublyLinkedList() for _ in range(levels)], dtype=object)
+        self.doubleLLBid = np.array([DoublyLinkedList() for _ in range(levels)], dtype=object)
         self.orderMapBid = SortedDict(lambda x: -x)
         self.orderMapAsk = SortedDict()
         self.orderNode = {}
@@ -40,8 +40,8 @@ class OrderBook:
         self.orderNode[oid] = newNode
         return
     
-    def processOrder(askOrder, bidOrder, fillQuantity):
-        price = askOrder.price if askOrder.lastUpdatesTimestamp > bidOrder.lastUpdatesTimestamp else bidOrder.price
+    def processOrder(self, askOrder, bidOrder, fillQuantity):
+        price = bidOrder.price if askOrder.lastUpdatesTimestamp > bidOrder.lastUpdatesTimestamp else bidOrder.price
         
         askOrder.filledQuantity += fillQuantity
         bidOrder.filledQuantity += fillQuantity
@@ -64,8 +64,8 @@ class OrderBook:
             return
 
         while bestBidPrice >= bestAskPrice:
-            bestBidNode = self.doubleLLBid[(bestBidPrice - lowerCircuit) * actualPricePrecision].head
-            bestAskNode = self.doubleLLAsk[(upperCircuit - bestAskPrice) * actualPricePrecision].head
+            bestBidNode = self.doubleLLBid[int((bestBidPrice - lowerCircuit) * actualPricePrecision)].head
+            bestAskNode = self.doubleLLAsk[int((upperCircuit - bestAskPrice) * actualPricePrecision)].head
 
             while bestBidNode and bestAskNode and bestBidQuantity > 0 and bestAskQuantity > 0:
                 bidOrder = self.orderInfo[bestBidNode.order_id]
@@ -84,11 +84,15 @@ class OrderBook:
 
             # Move iteratorBid to the next price level only if bestBidNode is None
             if bestBidNode is None:
+                initPrice = bestBidPrice
                 bestBidPrice, bestBidQuantity = next(iteratorBid)
+                del self.orderMapBid[initPrice]
                 
             # Move iteratorAsk to the next price level only if bestAskNode is None
             if bestAskNode is None:
+                initPrice = bestAskPrice
                 bestAskPrice, bestAskQuantity = next(iteratorAsk)
+                del self.orderMapAsk[initPrice]
 
         return
 
