@@ -43,6 +43,7 @@ def placeOrderAPI():
     newOrder = Order(data['price'], data['quantity'], side)
     orderBook.addOrderInfo(newOrder.oid, newOrder)
     orderBook.placeOrder(data['price'], data['quantity'], newOrder.oid, side)
+    orderBook.executeOrder()
     
     return jsonify({"status": "success", "order_id": newOrder.oid}), 201
 
@@ -67,6 +68,7 @@ def modifyOrderAPI():
         return jsonify({"success": True, "message": "Order already Filled/Canceled"}), 200
     
     orderBook.modifyOrder(initialPrice, data['price'], quantity, side, order.oid)
+    orderBook.executeOrder()
 
     return jsonify({"success": True, "message": "Order modified successfully"}), 200
 
@@ -113,12 +115,25 @@ def fetchOrderAPI():
 
     return jsonify({"success": True, "data": orderInfo}), 200
 
+@app.route('/api/fetch_trades', methods=['GET'])
+@limiter.limit("100 per minute")
+def fetchTradesAPI():
+    
+    print("Received request for fetching all trades")
+    trades = orderBook.getAllTrades()
+
+    if not trades:
+        return jsonify({"success": True, "message": "No trades available", "data": []}), 200
+    
+    return jsonify({"success": True, "data": trades}), 200
+
 def sendOrderBookUpdates():
     while True:
         time.sleep(1) 
         orderBookData = orderBook.getOrderBookData()
+        print(orderBookData)
         socketio.emit('orderBook', {'data': orderBookData})
-        print("Emitting OrderBook")
+        # print("Emitting OrderBook")
 
 # Start the background thread when the Flask app starts
 @app.before_request
@@ -130,9 +145,8 @@ def initialize_and_start():
             lowerCircuitPrice = lastTradedPrice * (1 - lowerCircuitPercent)
             upperCircuitPrice = lastTradedPrice * (1 + upperCircuitPercent)
 
-            bidLevels = (lastTradedPrice - lowerCircuitPrice) * actualPricePrecision
-            askLevels = (upperCircuitPrice - lastTradedPrice) * actualPricePrecision
-            orderBook = OrderBook(int(bidLevels), int(askLevels), socketio)
+            levels = int((upperCircuitPrice - lowerCircuitPrice) * actualPricePrecision) + 1
+            orderBook = OrderBook(levels, socketio)
 
             # Start background thread for sending updates
             if not hasattr(initialize_and_start, "thread_started"):
@@ -142,11 +156,6 @@ def initialize_and_start():
                 initialize_and_start.thread_started = True
 
             initialize_and_start.initialized = True
-
-@socketio.on('send_update') 
-def handle_send_update(message):
-    print('Received update:', message)
-    socketio.emit('receive_update', {'data': 'Update received: ' + message['data']})
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
