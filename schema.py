@@ -1,8 +1,8 @@
-from mongoengine import Document, StringField, IntField, FloatField, ListField, EnumField
+from mongoengine import Document, StringField, IntField, FloatField, EnumField
 
 # Define the Trade Document
 class Trade(Document):
-    unique_id = StringField(required=True, unique=True)
+    unique_id = StringField(required=True, primary_key=True)
     execution_timestamp = IntField(required=True)
     price = FloatField(required=True)
     qty = FloatField(required=True)
@@ -11,7 +11,7 @@ class Trade(Document):
 
 # Define the Order Document
 class Order(Document):
-    oid = StringField(required=True, unique=True)
+    oid = StringField(required=True, primary_key=True)
     price = FloatField(required=True)
     quantity = FloatField(required=True)
     filledQuantity = FloatField(default=0)
@@ -19,5 +19,5 @@ class Order(Document):
     placedTimestamp = IntField(required=True)
     lastUpdatesTimestamp = IntField(required=True)
     side = EnumField(choices=['BUY', 'SELL'], required=True)
-    status = EnumField(choices=['OPEN', 'CLOSED', 'CANCELLED', 'FILLED', 'PARTIALLY FILLED'], default='OPEN')
+    status = EnumField(choices=['OPEN', 'PARTIALLY CANCELED', 'CANCELLED', 'FILLED', 'PARTIALLY FILLED'], default='OPEN')
     clientOrderId = StringField()
