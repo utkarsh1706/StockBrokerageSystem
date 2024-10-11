@@ -68,6 +68,7 @@ def modifyOrderAPI():
         return jsonify({"success": True, "message": "Order already Filled/Canceled"}), 200
     
     orderBook.modifyOrder(initialPrice, data['price'], quantity, side, order.oid)
+    orderBook.executeOrder()
 
     return jsonify({"success": True, "message": "Order modified successfully"}), 200
 

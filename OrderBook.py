@@ -106,10 +106,12 @@ class OrderBook:
                 # Move to the next nodes in the doubly linked lists if orders are filled
                 if askOrder.status == "FILLED":
                     tempNode = bestAskNode
+                    del self.orderNode[tempNode.order_id]
                     bestAskNode = bestAskNode.next
                     self.doubleLLAsk[int((upperCircuit - bestAskPrice) * actualPricePrecision)].remove(tempNode)
                 if bidOrder.status == "FILLED":
                     tempNode = bestBidNode
+                    del self.orderNode[tempNode.order_id]
                     bestBidNode = bestBidNode.next
                     self.doubleLLBid[int((bestBidPrice - lowerCircuit) * actualPricePrecision)].remove(tempNode)
 
