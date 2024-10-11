@@ -71,3 +71,18 @@ class Order:
             "order_alive" : 1 if self.status in ["OPEN", "PARTIALLY FILLED"] else 0
         }
         return orderInfo
+    
+    def to_dict(self):
+        """Convert the Order object to a dictionary."""
+        return {
+            "oid": self.oid,
+            "price": self.price,
+            "quantity": self.quantity,
+            "filledQuantity": self.filledQuantity,
+            "averagePrice": self.averagePrice,
+            "placedTimestamp": self.placedTimestamp,
+            "lastUpdatesTimestamp": self.lastUpdatesTimestamp,
+            "side": self.side,
+            "status": self.status,
+            "clientOrderId": self.clientOrderId
+        }

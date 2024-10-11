@@ -18,16 +18,16 @@ class OrderBook:
         self.ws = ws
         self.redisClient = redisClient
     
-    def _updateOrderMap(self, price_map, price, quantity):
-        if price in price_map:
-            price_map[price] += quantity
+    def _updateOrderMap(self, priceMap, price, quantity):
+        if price in priceMap:
+            priceMap[price] += quantity
         else:
-            price_map[price] = quantity
+            priceMap[price] = quantity
         return
     
-    def _removeOrderIfZero(self, price_map, price):
-        if price in price_map and price_map[price] == 0:
-            del price_map[price]
+    def _removeOrderIfZero(self, priceMap, price):
+        if price in priceMap and priceMap[price] == 0:
+            del priceMap[price]
         return
     
     def placeOrder(self, price, quantity, oid, side):
@@ -181,6 +181,13 @@ class OrderBook:
     
     def addOrderInfo(self, oid, order:Order):
         self.orderInfo[oid] = order
+        self.addOrderRedis(oid, order)
+        return
+    
+    def addOrderRedis(self, oid, order: Order):
+        orderKey = f"order:{oid}"
+        self.redisClient.hset(orderKey, mapping=order.to_dict())
+        # print(f"Order {order.oid} stored in Redis with key: {orderKey}")
         return
     
     def getOrderBookData(self):
