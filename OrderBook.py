@@ -43,7 +43,7 @@ class OrderBook:
         self.orderNode[oid] = newNode
         return
 
-    def sendTrade(self, price, fillQuantity, bidID, askID):
+    def emitTrade(self, price, fillQuantity, bidID, askID):
         
         tradeData = {
             "unique_id": generateTradeID(),
@@ -75,7 +75,7 @@ class OrderBook:
         askOrder.status = "FILLED" if askOrder.filledQuantity == askOrder.quantity else "PARTIALLY FILLED"
         bidOrder.status = "FILLED" if bidOrder.filledQuantity == bidOrder.quantity else "PARTIALLY FILLED"
 
-        self.sendTrade(price, fillQuantity, bidOrder.oid, askOrder.oid)
+        self.emitTrade(price, fillQuantity, bidOrder.oid, askOrder.oid)
 
         return
 
