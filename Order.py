@@ -1,6 +1,7 @@
 import time
 import random
 import string
+import uuid
 
 class Order:
     def __init__(self, price, quantity, side, clientOrderId=None) -> None:
@@ -16,16 +17,16 @@ class Order:
         self.clientOrderId = clientOrderId if clientOrderId is not None else self.generateClientID()
 
     def generateClientID(self):
-        timestamp = int(time.time())
-        random_suffix = random.randint(1000, 9999)
-        random_letters = ''.join(random.choice(string.ascii_uppercase) for _ in range(2))
-        return f"CLIENTORD-{timestamp}-{random_letters}-{random_suffix}"
-    
+        unique_id = str(uuid.uuid4())[:8]
+        random_suffix = random.randint(10, 99)
+        random_letters = ''.join(random.choice(string.ascii_uppercase) for _ in range(2))        
+        return f"C-{unique_id}-{random_letters}-{random_suffix}"
+
     def generateOrderId(self):
-        timestamp = int(time.time())
+        unique_id = str(uuid.uuid4())[:8]
         random_suffix = random.randint(100, 999)
-        random_letters = ''.join(random.choice(string.ascii_uppercase) for _ in range(2))
-        return f"ORD-{timestamp}-{random_letters}-{random_suffix}"
+        random_letters = ''.join(random.choice(string.ascii_uppercase) for _ in range(2))        
+        return f"O{unique_id}{random_letters}{random_suffix}"
 
     def cancelOrder(self):
         if self.status in ["CANCELED", "PARTIALLY CANCELED"]:

@@ -6,14 +6,19 @@ from Order import Order
 from OrderBook import OrderBook
 import time
 import threading
-from redis import Redis
+import redis
 from constants import *
 from helper import *
 
 app = Flask(__name__)
 socketio = SocketIO(app)
 
-redis_client = Redis(host=redisHost, port=6379)
+try:
+    redisClient = redis.StrictRedis(host=redisHost, port=6379, db=0)
+    redisClient.ping()
+    print("Connected to Redis")
+except redis.ConnectionError as e:
+    print("Redis not connected due to ", e)
 
 # Initialize the Limiter with default rate limiting settings and redis as the storage backend
 limiter = Limiter(get_remote_address, app=app, default_limits=["1000 per minute"], storage_uri=storageRateLimit)
@@ -146,7 +151,7 @@ def initialize_and_start():
             upperCircuitPrice = lastTradedPrice * (1 + upperCircuitPercent)
 
             levels = int((upperCircuitPrice - lowerCircuitPrice) * actualPricePrecision) + 1
-            orderBook = OrderBook(levels, socketio)
+            orderBook = OrderBook(levels, socketio, redisClient)
 
             # Start background thread for sending updates
             if not hasattr(initialize_and_start, "thread_started"):

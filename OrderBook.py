@@ -8,7 +8,7 @@ from constants import *
 from helper import *
 
 class OrderBook:
-    def __init__(self, levels, ws) -> None:
+    def __init__(self, levels, ws, redisClient) -> None:
         self.doubleLLAsk = np.array([DoublyLinkedList() for _ in range(levels)], dtype=object)
         self.doubleLLBid = np.array([DoublyLinkedList() for _ in range(levels)], dtype=object)
         self.orderMapBid = SortedDict(lambda x: -x)
@@ -16,7 +16,7 @@ class OrderBook:
         self.orderNode = {}
         self.orderInfo = {}
         self.ws = ws
-        self.trades = []
+        self.redisClient = redisClient
     
     def _updateOrderMap(self, price_map, price, quantity):
         if price in price_map:
@@ -54,14 +54,15 @@ class OrderBook:
             "ask_order_id": askID
         }
 
-        self.trades.append(tradeData)
+        addTradeRedis(self.redisClient, tradeData)
 
         self.ws.emit("tradeUpdates", tradeData)
         print("Emitted Trade Data:", tradeData)
         return
     
     def getAllTrades(self):
-        return self.trades
+        data = [json.loads(item) for item in self.redisClient.lrange('tradeData', 0, -1)]
+        return data
     
     def processOrder(self, askOrder, bidOrder, fillQuantity):
         price = bidOrder.price if askOrder.lastUpdatesTimestamp > bidOrder.lastUpdatesTimestamp else bidOrder.price
