@@ -156,10 +156,5 @@ def initialize_and_start():
 
             initialize_and_start.initialized = True
 
-@socketio.on('send_update') 
-def handle_send_update(message):
-    print('Received update:', message)
-    socketio.emit('receive_update', {'data': 'Update received: ' + message['data']})
-
 if __name__ == '__main__':
     socketio.run(app, debug=True)
