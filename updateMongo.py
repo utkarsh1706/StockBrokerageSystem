@@ -31,11 +31,51 @@ def updateTrades():
                 ask_order_id=trade['ask_order_id']
             )
             newTrade.save()
-            print(f"Saved new trade: {newTrade.unique_id}")
+            print(f"Saved new trade: {newTrade.uniqueId}")
+
+def updateOrders():
+    keys = redisClient.keys('order:*')
+    
+    for orderKey in keys:
+        orderData = redisClient.hgetall(orderKey)
+        if orderData:
+            oid = orderData['oid']
+            
+            existingOrder = Order.objects(oid=oid).first()
+            
+            if existingOrder:
+                # Update existing order
+                existingOrder.update(
+                    price=float(orderData['price']),
+                    quantity=float(orderData['quantity']),
+                    filledQuantity=float(orderData['filledQuantity']),
+                    averagePrice=float(orderData['averagePrice']),
+                    lastUpdatesTimestamp=int(orderData['lastUpdatesTimestamp']),
+                    status=orderData['status'],
+                    side=orderData['side']
+                )
+            else:
+                # Create a new order if it doesn't exist
+                newOrder = Order(
+                    oid=oid,
+                    price=float(orderData['price']),
+                    quantity=float(orderData['quantity']),
+                    filledQuantity=float(orderData['filledQuantity']),
+                    averagePrice=float(orderData['averagePrice']),
+                    placedTimestamp=int(orderData['placedTimestamp']),
+                    lastUpdatesTimestamp=int(orderData['lastUpdatesTimestamp']),
+                    status=orderData['status'],
+                    side=orderData['side'],
+                    clientOrderId=orderData['clientOrderId']
+                )
+                newOrder.save()
+                print(f"Saved new order: {newOrder.oid}")
 
 def main():
     while True:
+        print("Updating MongoDB")
         updateTrades()
+        updateOrders()
         time.sleep(60)
 
 if __name__ == "__main__":
