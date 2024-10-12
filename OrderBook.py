@@ -70,13 +70,17 @@ class OrderBook:
         askOrder.filledQuantity += fillQuantity
         bidOrder.filledQuantity += fillQuantity
         
-        askOrder.averagePrice = ((askOrder.averagePrice * (askOrder.filledQuantity - fillQuantity)) + (price * fillQuantity)) / askOrder.filledQuantity
-        bidOrder.averagePrice = ((bidOrder.averagePrice * (bidOrder.filledQuantity - fillQuantity)) + (price * fillQuantity)) / bidOrder.filledQuantity
+        askOrder.averagePrice = round(((askOrder.averagePrice * (askOrder.filledQuantity - fillQuantity)) + (price * fillQuantity)) / askOrder.filledQuantity, 2)
+        bidOrder.averagePrice = round(((bidOrder.averagePrice * (bidOrder.filledQuantity - fillQuantity)) + (price * fillQuantity)) / bidOrder.filledQuantity, 2)
         
         askOrder.status = "FILLED" if askOrder.filledQuantity == askOrder.quantity else "PARTIALLY FILLED"
         bidOrder.status = "FILLED" if bidOrder.filledQuantity == bidOrder.quantity else "PARTIALLY FILLED"
+        askOrder.lastUpdatesTimestamp = int(time.time())
+        bidOrder.lastUpdatesTimestamp = int(time.time())
 
         self.emitTrade(price, fillQuantity, bidOrder.oid, askOrder.oid)
+        self.addOrderRedis(askOrder.oid, askOrder)
+        self.addOrderRedis(bidOrder.oid, bidOrder)
 
         return
 
