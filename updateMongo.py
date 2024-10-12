@@ -3,8 +3,14 @@ import json
 import time
 from mongoengine import Document, StringField, IntField, FloatField, connect
 import redis
+from dotenv import load_dotenv
+import os
 
-connect('your_database_name')
+load_dotenv()
+
+mongoURI = os.getenv("mongoURI")
+
+connect(db="StockBrokerSystem", host = mongoURI)
 
 redisClient = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
 

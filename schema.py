@@ -1,4 +1,16 @@
 from mongoengine import Document, StringField, IntField, FloatField, EnumField
+from enum import Enum
+
+class OrderSide(Enum):
+    BUY = "BUY"
+    SELL = "SELL"
+
+class OrderStatus(Enum):
+    OPEN = "OPEN"
+    PARTIALLY_CANCELED = "PARTIALLY CANCELED"
+    CANCELLED = "CANCELLED"
+    FILLED = "FILLED"
+    PARTIALLY_FILLED = "PARTIALLY FILLED"
 
 # Define the Trade Document
 class Trade(Document):
@@ -18,6 +30,6 @@ class Order(Document):
     averagePrice = FloatField(default=0)
     placedTimestamp = IntField(required=True)
     lastUpdatesTimestamp = IntField(required=True)
-    side = EnumField(choices=['BUY', 'SELL'], required=True)
-    status = EnumField(choices=['OPEN', 'PARTIALLY CANCELED', 'CANCELLED', 'FILLED', 'PARTIALLY FILLED'], default='OPEN')
+    side = EnumField(OrderSide, required=True)  # Use the Enum here
+    status = EnumField(OrderStatus, default=OrderStatus.OPEN)  # Status EnumField
     clientOrderId = StringField()
