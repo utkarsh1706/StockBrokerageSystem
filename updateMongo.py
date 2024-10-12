@@ -31,7 +31,7 @@ def updateTrades():
                 ask_order_id=trade['ask_order_id']
             )
             newTrade.save()
-            print(f"Saved new trade: {newTrade.uniqueId}")
+            print(f"Saved new trade: {newTrade.unique_id}")
 
 def updateOrders():
     keys = redisClient.keys('order:*')

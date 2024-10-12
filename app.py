@@ -72,6 +72,7 @@ def modifyOrderAPI():
     if not isSucessful:
         return jsonify({"success": True, "message": "Order already Filled/Canceled"}), 200
     
+    orderBook.addOrderRedis(order.oid, order)
     orderBook.modifyOrder(initialPrice, data['price'], quantity, side, order.oid)
     orderBook.executeOrder()
 
@@ -97,6 +98,7 @@ def cancelOrderAPI():
     if not isSuccessful:
         return jsonify({"success": False, "message": "Order already Filled/Canceled"}), 200
     
+    orderBook.addOrderRedis(order.oid, order)
     orderBook.cancelOrder(price, unFilledQuantity, data['order_id'], side)
 
     return jsonify({"success": True, "message": "Order canceled successfully"}), 200
