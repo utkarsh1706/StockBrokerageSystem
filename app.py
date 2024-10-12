@@ -6,14 +6,19 @@ from Order import Order
 from OrderBook import OrderBook
 import time
 import threading
-from redis import Redis
+import redis
 from constants import *
 from helper import *
 
 app = Flask(__name__)
 socketio = SocketIO(app)
 
-redis_client = Redis(host=redisHost, port=6379)
+try:
+    redisClient = redis.StrictRedis(host=redisHost, port=6379, db=0)
+    redisClient.ping()
+    print("Connected to Redis")
+except redis.ConnectionError as e:
+    print("Redis not connected due to ", e)
 
 # Initialize the Limiter with default rate limiting settings and redis as the storage backend
 limiter = Limiter(get_remote_address, app=app, default_limits=["1000 per minute"], storage_uri=storageRateLimit)
@@ -137,25 +142,25 @@ def sendOrderBookUpdates():
 
 # Start the background thread when the Flask app starts
 @app.before_request
-def initialize_and_start():
+def initializeStart():
     global orderBook
 
     with initialization_lock:
-        if not hasattr(initialize_and_start, "initialized"):
+        if not hasattr(initializeStart, "initialized"):
             lowerCircuitPrice = lastTradedPrice * (1 - lowerCircuitPercent)
             upperCircuitPrice = lastTradedPrice * (1 + upperCircuitPercent)
 
             levels = int((upperCircuitPrice - lowerCircuitPrice) * actualPricePrecision) + 1
-            orderBook = OrderBook(levels, socketio)
+            orderBook = OrderBook(levels, socketio, redisClient)
 
             # Start background thread for sending updates
-            if not hasattr(initialize_and_start, "thread_started"):
+            if not hasattr(initializeStart, "threadStarted"):
                 thread = threading.Thread(target=sendOrderBookUpdates)
                 thread.daemon = True
                 thread.start()
-                initialize_and_start.thread_started = True
+                initializeStart.threadStarted = True
 
-            initialize_and_start.initialized = True
+            initializeStart.initialized = True
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)

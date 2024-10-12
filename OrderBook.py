@@ -8,7 +8,7 @@ from constants import *
 from helper import *
 
 class OrderBook:
-    def __init__(self, levels, ws) -> None:
+    def __init__(self, levels, ws, redisClient) -> None:
         self.doubleLLAsk = np.array([DoublyLinkedList() for _ in range(levels)], dtype=object)
         self.doubleLLBid = np.array([DoublyLinkedList() for _ in range(levels)], dtype=object)
         self.orderMapBid = SortedDict(lambda x: -x)
@@ -16,18 +16,18 @@ class OrderBook:
         self.orderNode = {}
         self.orderInfo = {}
         self.ws = ws
-        self.trades = []
+        self.redisClient = redisClient
     
-    def _updateOrderMap(self, price_map, price, quantity):
-        if price in price_map:
-            price_map[price] += quantity
+    def _updateOrderMap(self, priceMap, price, quantity):
+        if price in priceMap:
+            priceMap[price] += quantity
         else:
-            price_map[price] = quantity
+            priceMap[price] = quantity
         return
     
-    def _removeOrderIfZero(self, price_map, price):
-        if price in price_map and price_map[price] == 0:
-            del price_map[price]
+    def _removeOrderIfZero(self, priceMap, price):
+        if price in priceMap and priceMap[price] == 0:
+            del priceMap[price]
         return
     
     def placeOrder(self, price, quantity, oid, side):
@@ -54,14 +54,15 @@ class OrderBook:
             "ask_order_id": askID
         }
 
-        self.trades.append(tradeData)
+        addTradeRedis(self.redisClient, tradeData)
 
         self.ws.emit("tradeUpdates", tradeData)
         print("Emitted Trade Data:", tradeData)
         return
     
     def getAllTrades(self):
-        return self.trades
+        data = [json.loads(item) for item in self.redisClient.lrange('tradeData', 0, -1)]
+        return data
     
     def processOrder(self, askOrder, bidOrder, fillQuantity):
         price = bidOrder.price if askOrder.lastUpdatesTimestamp > bidOrder.lastUpdatesTimestamp else bidOrder.price
@@ -180,6 +181,13 @@ class OrderBook:
     
     def addOrderInfo(self, oid, order:Order):
         self.orderInfo[oid] = order
+        self.addOrderRedis(oid, order)
+        return
+    
+    def addOrderRedis(self, oid, order: Order):
+        orderKey = f"order:{oid}"
+        self.redisClient.hset(orderKey, mapping=order.to_dict())
+        # print(f"Order {order.oid} stored in Redis with key: {orderKey}")
         return
     
     def getOrderBookData(self):
