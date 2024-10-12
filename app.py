@@ -142,11 +142,11 @@ def sendOrderBookUpdates():
 
 # Start the background thread when the Flask app starts
 @app.before_request
-def initialize_and_start():
+def initializeStart():
     global orderBook
 
     with initialization_lock:
-        if not hasattr(initialize_and_start, "initialized"):
+        if not hasattr(initializeStart, "initialized"):
             lowerCircuitPrice = lastTradedPrice * (1 - lowerCircuitPercent)
             upperCircuitPrice = lastTradedPrice * (1 + upperCircuitPercent)
 
@@ -154,13 +154,13 @@ def initialize_and_start():
             orderBook = OrderBook(levels, socketio, redisClient)
 
             # Start background thread for sending updates
-            if not hasattr(initialize_and_start, "thread_started"):
+            if not hasattr(initializeStart, "threadStarted"):
                 thread = threading.Thread(target=sendOrderBookUpdates)
                 thread.daemon = True
                 thread.start()
-                initialize_and_start.thread_started = True
+                initializeStart.threadStarted = True
 
-            initialize_and_start.initialized = True
+            initializeStart.initialized = True
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)

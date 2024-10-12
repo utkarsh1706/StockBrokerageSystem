@@ -1,7 +1,7 @@
 from schema import Trade, Order
 import json
 import time
-from mongoengine import Document, StringField, IntField, FloatField, connect
+from mongoengine import connect
 import redis
 from dotenv import load_dotenv
 import os

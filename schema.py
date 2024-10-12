@@ -30,6 +30,6 @@ class Order(Document):
     averagePrice = FloatField(default=0)
     placedTimestamp = IntField(required=True)
     lastUpdatesTimestamp = IntField(required=True)
-    side = EnumField(OrderSide, required=True)  # Use the Enum here
-    status = EnumField(OrderStatus, default=OrderStatus.OPEN)  # Status EnumField
+    side = EnumField(OrderSide, required=True)
+    status = EnumField(OrderStatus, default=OrderStatus.OPEN)
     clientOrderId = StringField()
