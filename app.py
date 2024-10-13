@@ -24,7 +24,10 @@ app = Flask(__name__)
 socketio = SocketIO(app)
 
 try:
-    redisClient = redis.StrictRedis(host=redisHost, port=6379, db=0)
+    redisClient = redis.Redis(
+                    host='redis-16083.c305.ap-south-1-1.ec2.redns.redis-cloud.com',
+                    port=16083,
+                    password='k9Av3yeg0I5pIRixxWbMna2hwXQD0rnv')
     redisClient.ping()
     print("Connected to Redis")
 except redis.ConnectionError as e:
