@@ -10,5 +10,5 @@ upperCircuit = 108.9
 lowerCircuitValid = False
 upperCircuitValid = False
 
-redisHost = 'localhost'
-storageRateLimit = "redis://localhost:6379"
+redisHost = 'redis-16083.c305.ap-south-1-1.ec2.redns.redis-cloud.com'
+storageRateLimit = "redis://redis-16083.c305.ap-south-1-1.ec2.redns.redis-cloud.com:16083"
