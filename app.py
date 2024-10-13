@@ -9,6 +9,16 @@ import threading
 import redis
 from constants import *
 from helper import *
+from retrieveMongo import *
+from mongoengine import connect
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+mongoURI = os.getenv("mongoURI")
+
+connect(db="StockBrokerSystem", host = mongoURI)
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -45,7 +55,7 @@ def placeOrderAPI():
     if not isValid:
         return jsonify({"error": message}), 400
     
-    newOrder = Order(data['price'], data['quantity'], side)
+    newOrder = Order(price=data['price'], quantity=data['quantity'], side=side)
     orderBook.addOrderInfo(newOrder.oid, newOrder)
     orderBook.placeOrder(data['price'], data['quantity'], newOrder.oid, side)
     orderBook.executeOrder()
@@ -72,6 +82,7 @@ def modifyOrderAPI():
     if not isSucessful:
         return jsonify({"success": True, "message": "Order already Filled/Canceled"}), 200
     
+    orderBook.addOrderRedis(order.oid, order)
     orderBook.modifyOrder(initialPrice, data['price'], quantity, side, order.oid)
     orderBook.executeOrder()
 
@@ -97,6 +108,7 @@ def cancelOrderAPI():
     if not isSuccessful:
         return jsonify({"success": False, "message": "Order already Filled/Canceled"}), 200
     
+    orderBook.addOrderRedis(order.oid, order)
     orderBook.cancelOrder(price, unFilledQuantity, data['order_id'], side)
 
     return jsonify({"success": True, "message": "Order canceled successfully"}), 200
@@ -152,6 +164,7 @@ def initializeStart():
 
             levels = int((upperCircuitPrice - lowerCircuitPrice) * actualPricePrecision) + 1
             orderBook = OrderBook(levels, socketio, redisClient)
+            retrieveAndTraverseOrders(orderBook)
 
             # Start background thread for sending updates
             if not hasattr(initializeStart, "threadStarted"):
