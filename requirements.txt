@@ -2,6 +2,7 @@ bidict==0.23.1
 blinker==1.8.2
 click==8.1.7
 Deprecated==1.2.14
+dnspython==2.7.0
 Flask==3.0.3
 Flask-Limiter==3.8.0
 Flask-SocketIO==5.4.1
@@ -13,10 +14,13 @@ limits==3.13.0
 markdown-it-py==3.0.0
 MarkupSafe==3.0.1
 mdurl==0.1.2
+mongoengine==0.29.1
 numpy==2.1.2
 ordered-set==4.1.0
 packaging==24.1
 Pygments==2.18.0
+pymongo==4.10.1
+python-dotenv==1.0.1
 python-engineio==4.9.1
 python-socketio==5.11.4
 redis==5.1.1
