@@ -13,6 +13,7 @@ from retrieveMongo import *
 from mongoengine import connect
 from dotenv import load_dotenv
 import os
+import subprocess
 
 load_dotenv()
 
@@ -24,10 +25,7 @@ app = Flask(__name__)
 socketio = SocketIO(app)
 
 try:
-    redisClient = redis.Redis(
-                    host='redis-16083.c305.ap-south-1-1.ec2.redns.redis-cloud.com',
-                    port=16083,
-                    password='k9Av3yeg0I5pIRixxWbMna2hwXQD0rnv')
+    redisClient = redis.Redis(host=redisHost, port=redisPort, password=redisPassword)
     redisClient.ping()
     print("Connected to Redis")
 except redis.ConnectionError as e:
@@ -175,6 +173,9 @@ def initializeStart():
                 thread.daemon = True
                 thread.start()
                 initializeStart.threadStarted = True
+            
+            updateMongoFile = os.path.join(os.path.dirname(__file__), 'updateMongo.py')
+            # subprocess.Popen(['python3', updateMongoFile])
 
             initializeStart.initialized = True
 
