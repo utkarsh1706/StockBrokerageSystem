@@ -34,13 +34,13 @@ except redis.ConnectionError as e:
     print("Redis not connected due to ", e)
 
 # Initialize the Limiter with default rate limiting settings and redis as the storage backend
-limiter = Limiter(get_remote_address, app=app, default_limits=["1000 per minute"], storage_uri=storageRateLimit)
+# limiter = Limiter(get_remote_address, app=app, default_limits=["1000 per minute"], storage_uri=storageRateLimit)
 
 orderBook = None
 initialization_lock = threading.Lock()
 
 @app.route('/api/place_order', methods=['POST'])
-@limiter.limit("100 per minute")
+# @limiter.limit("100 per minute")
 def placeOrderAPI():
     print("Received request for placing an order")
     data = request.json
@@ -66,7 +66,7 @@ def placeOrderAPI():
     return jsonify({"status": "success", "order_id": newOrder.oid}), 201
 
 @app.route('/api/modify_order', methods=['PUT'])
-@limiter.limit("100 per minute")
+# @limiter.limit("100 per minute")
 def modifyOrderAPI():
     
     print("Received request for modifying an order")
@@ -92,7 +92,7 @@ def modifyOrderAPI():
     return jsonify({"success": True, "message": "Order modified successfully"}), 200
 
 @app.route('/api/cancel_order', methods=['DELETE'])
-@limiter.limit("100 per minute")
+# @limiter.limit("100 per minute")
 def cancelOrderAPI():
     
     print("Received request for canceling an order")
@@ -117,7 +117,7 @@ def cancelOrderAPI():
     return jsonify({"success": True, "message": "Order canceled successfully"}), 200
 
 @app.route('/api/fetch_order', methods=['GET'])
-@limiter.limit("100 per minute")
+# @limiter.limit("100 per minute")
 def fetchOrderAPI():
     
     print("Received request for fetching an order")
@@ -136,7 +136,7 @@ def fetchOrderAPI():
     return jsonify({"success": True, "data": orderInfo}), 200
 
 @app.route('/api/fetch_trades', methods=['GET'])
-@limiter.limit("100 per minute")
+# @limiter.limit("100 per minute")
 def fetchTradesAPI():
     
     print("Received request for fetching all trades")
