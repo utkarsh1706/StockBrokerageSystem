@@ -16,6 +16,16 @@ class Order:
         self.status = "OPEN"
         self.clientOrderId = clientOrderId if clientOrderId is not None else self.generateClientID()
 
+    def updateFromMongo(self, oid, filledQuantity, averagePrice, placedTimestamp, lastUpdatesTimestamp, status, clientOrderId):
+        self.oid = oid
+        self.filledQuantity = filledQuantity
+        self.averagePrice = averagePrice
+        self.placedTimestamp = placedTimestamp
+        self.lastUpdatesTimestamp = lastUpdatesTimestamp
+        self.status = status
+        self.clientOrderId = clientOrderId
+        return
+    
     def generateClientID(self):
         unique_id = str(uuid.uuid4())[:8]
         random_suffix = random.randint(10, 99)

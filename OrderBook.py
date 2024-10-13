@@ -73,10 +73,17 @@ class OrderBook:
         askOrder.averagePrice = round(((askOrder.averagePrice * (askOrder.filledQuantity - fillQuantity)) + (price * fillQuantity)) / askOrder.filledQuantity, 2)
         bidOrder.averagePrice = round(((bidOrder.averagePrice * (bidOrder.filledQuantity - fillQuantity)) + (price * fillQuantity)) / bidOrder.filledQuantity, 2)
         
-        askOrder.status = "FILLED" if askOrder.filledQuantity == askOrder.quantity else "PARTIALLY FILLED"
-        bidOrder.status = "FILLED" if bidOrder.filledQuantity == bidOrder.quantity else "PARTIALLY FILLED"
-        askOrder.lastUpdatesTimestamp = int(time.time())
-        bidOrder.lastUpdatesTimestamp = int(time.time())
+        if askOrder.filledQuantity == askOrder.quantity:
+            askOrder.status = "FILLED"
+            askOrder.lastUpdatesTimestamp = int(time.time())
+        else:
+            askOrder.status = "PARTIALLY FILLED"
+
+        if bidOrder.filledQuantity == bidOrder.quantity:
+            bidOrder.status = "FILLED"
+            bidOrder.lastUpdatesTimestamp = int(time.time())
+        else:
+            bidOrder.status = "PARTIALLY FILLED"
 
         self.emitTrade(price, fillQuantity, bidOrder.oid, askOrder.oid)
         self.addOrderRedis(askOrder.oid, askOrder)
@@ -190,7 +197,10 @@ class OrderBook:
     
     def addOrderRedis(self, oid, order: Order):
         orderKey = f"order:{oid}"
-        self.redisClient.hset(orderKey, mapping=order.to_dict())
+        orderData = order.to_dict()
+        orderData['side'] = str(order.side)
+        orderData['status'] = str(order.status)
+        self.redisClient.hset(orderKey, mapping=orderData)
         # print(f"Order {order.oid} stored in Redis with key: {orderKey}")
         return
     

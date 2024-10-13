@@ -1,4 +1,4 @@
-from schema import Trade, Order
+from schema import Trade, Orders
 import json
 import time
 from mongoengine import connect
@@ -41,7 +41,7 @@ def updateOrders():
         if orderData:
             oid = orderData['oid']
             
-            existingOrder = Order.objects(oid=oid).first()
+            existingOrder = Orders.objects(oid=oid).first()
             
             if existingOrder:
                 # Update existing order
@@ -56,7 +56,7 @@ def updateOrders():
                 )
             else:
                 # Create a new order if it doesn't exist
-                newOrder = Order(
+                newOrder = Orders(
                     oid=oid,
                     price=float(orderData['price']),
                     quantity=float(orderData['quantity']),

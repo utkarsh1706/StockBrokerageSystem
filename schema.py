@@ -22,7 +22,7 @@ class Trade(Document):
     ask_order_id = StringField(required=True)
 
 # Define the Order Document
-class Order(Document):
+class Orders(Document):
     oid = StringField(required=True, primary_key=True)
     price = FloatField(required=True)
     quantity = FloatField(required=True)
