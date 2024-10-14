@@ -10,7 +10,7 @@ import redis
 from constants import *
 from helper import *
 from retrieveMongo import *
-from mongoengine import connect
+from mongoengine import connect, ConnectionError
 from dotenv import load_dotenv
 import os
 import subprocess
@@ -18,8 +18,15 @@ import subprocess
 load_dotenv()
 
 mongoURI = os.getenv("mongoURI")
+redisPassword = os.getenv("redisPassword")
+redisHost = os.getenv("redisHost")
+redisPort = os.getenv("redisPort")
+storageRateLimit = os.getenv("storageRateLimit")
 
-connect(db="StockBrokerSystem", host = mongoURI)
+try:
+    connect(db="StockBrokerSystem", host=mongoURI)
+except ConnectionError as e:
+    print(f"Error connecting to the database: {e}")
 
 app = Flask(__name__)
 socketio = SocketIO(app)
