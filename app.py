@@ -47,7 +47,12 @@ def placeOrderAPI():
     if not data or 'quantity' not in data or 'price' not in data or 'side' not in data:
         return jsonify({"error": "Invalid data"}), 400
 
-    side = "SELL" if data['side'] == 1 else "BUY"
+    if data['side'] == 1:
+        side = "SELL"
+    elif data['side'] == -1:
+        side = "BUY"
+    else:
+        return jsonify({"error": "Invalid Side"}), 400
     
     data['price'] = round(data['price'], pricePrecision)
 
