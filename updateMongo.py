@@ -50,8 +50,10 @@ def updateOrders():
             averagePrice = float(orderData['averagePrice'])
             placedTimestamp = int(orderData['placedTimestamp'])
             lastUpdatesTimestamp = int(orderData['lastUpdatesTimestamp'])
-            status = OrderStatus(orderData['status'])
-            side = OrderSide(orderData['side'])
+            sideStr = orderData['side'].split('.')[-1] 
+            statusStr = orderData['status'].split('.')[-1]
+            status = OrderStatus[statusStr]
+            side = OrderSide[sideStr]
             clientOrderId = orderData['clientOrderId']
             
             # Check if the order exists in MongoDB
