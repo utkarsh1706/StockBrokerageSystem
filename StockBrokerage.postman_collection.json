@@ -1,0 +1,265 @@
+{
+	"info": {
+		"_postman_id": "f7bdf9fb-c0bb-4eac-8334-3d75e68943dd",
+		"name": "StockBrokerage",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "29734171"
+	},
+	"item": [
+		{
+			"name": "PlaceOrder1",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"price\" : 98,\r\n    \"quantity\" : 40,\r\n    \"side\" : -1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://stock-brokerage-system.vercel.app/api/place_order",
+					"protocol": "https",
+					"host": [
+						"stock-brokerage-system",
+						"vercel",
+						"app"
+					],
+					"path": [
+						"api",
+						"place_order"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PlaceOrder6",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"price\" : 102,\r\n    \"quantity\" : 150,\r\n    \"side\" : -1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://stock-brokerage-system.vercel.app/api/place_order",
+					"protocol": "https",
+					"host": [
+						"stock-brokerage-system",
+						"vercel",
+						"app"
+					],
+					"path": [
+						"api",
+						"place_order"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PlaceOrder2",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"price\" : 98,\r\n    \"quantity\" : 20,\r\n    \"side\" : -1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://stock-brokerage-system.vercel.app/api/place_order",
+					"protocol": "https",
+					"host": [
+						"stock-brokerage-system",
+						"vercel",
+						"app"
+					],
+					"path": [
+						"api",
+						"place_order"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PlaceOrder3",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"price\" : 97,\r\n    \"quantity\" : 50,\r\n    \"side\" : -1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://stock-brokerage-system.vercel.app/api/place_order",
+					"protocol": "https",
+					"host": [
+						"stock-brokerage-system",
+						"vercel",
+						"app"
+					],
+					"path": [
+						"api",
+						"place_order"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PlaceOrder4",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"price\" : 100,\r\n    \"quantity\" : 40,\r\n    \"side\" : 1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://stock-brokerage-system.vercel.app/api/place_order",
+					"protocol": "https",
+					"host": [
+						"stock-brokerage-system",
+						"vercel",
+						"app"
+					],
+					"path": [
+						"api",
+						"place_order"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PlaceOrder5",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"price\" : 95,\r\n    \"quantity\" : 80,\r\n    \"side\" : 1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://stock-brokerage-system.vercel.app/api/place_order",
+					"protocol": "https",
+					"host": [
+						"stock-brokerage-system",
+						"vercel",
+						"app"
+					],
+					"path": [
+						"api",
+						"place_order"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "FetchOrder",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"order_id\" : \"O3214a3f5SV117\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://ordertraderetrievalservice.vercel.app/api/fetch_order",
+					"protocol": "https",
+					"host": [
+						"ordertraderetrievalservice",
+						"vercel",
+						"app"
+					],
+					"path": [
+						"api",
+						"fetch_order"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Fetch All Orders",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://ordertraderetrievalservice.vercel.app/api/fetch_allOrders",
+					"protocol": "https",
+					"host": [
+						"ordertraderetrievalservice",
+						"vercel",
+						"app"
+					],
+					"path": [
+						"api",
+						"fetch_allOrders"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Fetch Trades",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://ordertraderetrievalservice.vercel.app/api/fetch_trades",
+					"protocol": "https",
+					"host": [
+						"ordertraderetrievalservice",
+						"vercel",
+						"app"
+					],
+					"path": [
+						"api",
+						"fetch_trades"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
