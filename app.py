@@ -44,84 +44,111 @@ initialization_lock = threading.Lock()
 @app.route('/api/place_order', methods=['POST'])
 @limiter.limit("100 per minute")
 def placeOrderAPI():
-    print("Received request for placing an order")
-    data = request.json
-    print("Data received:", data)
+    try:
+        print("Received request for placing an order")
+        data = request.json
+        print("Data received:", data)
 
-    if not data or 'quantity' not in data or 'price' not in data or 'side' not in data:
-        return jsonify({"error": "Invalid data"}), 400
+        if not data or 'quantity' not in data or 'price' not in data or 'side' not in data:
+            return jsonify({"error": "Invalid data"}), 400
 
-    if data['side'] == 1:
-        side = "SELL"
-    elif data['side'] == -1:
-        side = "BUY"
-    else:
-        return jsonify({"error": "Invalid Side"}), 400
-    
-    data['price'] = round(data['price'], pricePrecision)
+        if data['side'] == 1:
+            side = "SELL"
+        elif data['side'] == -1:
+            side = "BUY"
+        else:
+            return jsonify({"error": "Invalid Side"}), 400
 
-    isValid, message = checkValid(data['price'], data['quantity'], minOrderValue, side)
+        data['price'] = round(data['price'], pricePrecision)
 
-    if not isValid:
-        return jsonify({"error": message}), 400
-    
-    newOrder = Order(price=data['price'], quantity=data['quantity'], side=side)
-    orderBook.addOrderInfo(newOrder.oid, newOrder)
-    orderBook.placeOrder(data['price'], data['quantity'], newOrder.oid, side)
-    orderBook.executeOrder()
-    
-    return jsonify({"status": "success", "order_id": newOrder.oid}), 201
+        isValid, message = checkValid(data['price'], data['quantity'], minOrderValue, side)
+
+        if not isValid:
+            return jsonify({"error": message}), 400
+
+        newOrder = Order(price=data['price'], quantity=data['quantity'], side=side)
+        orderBook.addOrderInfo(newOrder.oid, newOrder)
+        orderBook.placeOrder(data['price'], data['quantity'], newOrder.oid, side)
+        orderBook.executeOrder()
+
+        return jsonify({"status": "success", "order_id": newOrder.oid}), 201
+
+    except KeyError as e:
+        return jsonify({"error": f"Missing key in request data: {e}"}), 400
+    except ValueError as e:
+        return jsonify({"error": f"Invalid value provided: {e}"}), 400
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return jsonify({"error": "An internal server error occurred"}), 500
 
 @app.route('/api/modify_order', methods=['PUT'])
 @limiter.limit("100 per minute")
 def modifyOrderAPI():
-    
-    print("Received request for modifying an order")
-    data = request.json
-    print("Data received:", data)
+    try:
+        print("Received request for modifying an order")
+        data = request.json
+        print("Data received:", data)
 
-    if not data or 'order_id' not in data or 'price' not in data:
-        return jsonify({"error": "Invalid data"}), 400
-    
-    order = orderBook.getOrderInfo(data['order_id'])
-    if not order:
-        return jsonify({"error": "Invalid Order_ID"}), 400
-    
-    isSucessful, initialPrice, quantity, side = order.modifyOrder(data['price'])
-    
-    if not isSucessful:
-        return jsonify({"success": True, "message": "Order already Filled/Canceled"}), 200
-    
-    orderBook.addOrderRedis(order.oid, order)
-    orderBook.modifyOrder(initialPrice, data['price'], quantity, side, order.oid)
-    orderBook.executeOrder()
+        if not data or 'order_id' not in data or 'price' not in data:
+            return jsonify({"error": "Invalid data"}), 400
 
-    return jsonify({"success": True, "message": "Order modified successfully"}), 200
+        order = orderBook.getOrderInfo(data['order_id'])
+        if not order:
+            return jsonify({"error": "Invalid Order_ID"}), 400
+
+        isSucessful, initialPrice, quantity, side = order.modifyOrder(data['price'])
+
+        if not isSucessful:
+            return jsonify({"success": True, "message": "Order already Filled/Canceled"}), 200
+
+        orderBook.addOrderRedis(order.oid, order)
+        orderBook.modifyOrder(initialPrice, data['price'], quantity, side, order.oid)
+        orderBook.executeOrder()
+
+        return jsonify({"success": True, "message": "Order modified successfully"}), 200
+
+    except KeyError as e:
+        return jsonify({"error": f"Missing key in request data: {e}"}), 400
+    except ValueError as e:
+        return jsonify({"error": f"Invalid value provided: {e}"}), 400
+    except AttributeError as e:
+        return jsonify({"error": f"Attribute error: {e}"}), 400
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return jsonify({"error": "An internal server error occurred"}), 500
 
 @app.route('/api/cancel_order', methods=['DELETE'])
 @limiter.limit("100 per minute")
 def cancelOrderAPI():
-    
-    print("Received request for canceling an order")
-    data = request.json
-    print("Data received:", data)
+    try:
+        print("Received request for canceling an order")
+        data = request.json
+        print("Data received:", data)
 
-    if not data or 'order_id' not in data:
-        return jsonify({"error": "Invalid data"}), 400
-    
-    order = orderBook.getOrderInfo(data['order_id'])
-    if not order:
-        return jsonify({"error": "Invalid Order_ID"}), 400
-    
-    isSuccessful, price, unFilledQuantity, side = order.cancelOrder()
-    
-    if not isSuccessful:
-        return jsonify({"success": False, "message": "Order already Filled/Canceled"}), 200
-    
-    orderBook.addOrderRedis(order.oid, order)
-    orderBook.cancelOrder(price, unFilledQuantity, data['order_id'], side)
+        if not data or 'order_id' not in data:
+            return jsonify({"error": "Invalid data"}), 400
 
-    return jsonify({"success": True, "message": "Order canceled successfully"}), 200
+        order = orderBook.getOrderInfo(data['order_id'])
+        if not order:
+            return jsonify({"error": "Invalid Order_ID"}), 400
+
+        isSuccessful, price, unFilledQuantity, side = order.cancelOrder()
+
+        if not isSuccessful:
+            return jsonify({"success": False, "message": "Order already Filled/Canceled"}), 200
+
+        orderBook.addOrderRedis(order.oid, order)
+        orderBook.cancelOrder(price, unFilledQuantity, data['order_id'], side)
+
+        return jsonify({"success": True, "message": "Order canceled successfully"}), 200
+
+    except KeyError as e:
+        return jsonify({"error": f"Missing key in request data: {e}"}), 400
+    except AttributeError as e:
+        return jsonify({"error": f"Attribute error: {e}"}), 400
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return jsonify({"error": "An internal server error occurred"}), 500
 
 def sendOrderBookUpdates():
     while True:
@@ -138,24 +165,27 @@ def initializeStart():
 
     with initialization_lock:
         if not hasattr(initializeStart, "initialized"):
-            lowerCircuitPrice = lastTradedPrice * (1 - lowerCircuitPercent)
-            upperCircuitPrice = lastTradedPrice * (1 + upperCircuitPercent)
+            try:
+                lowerCircuitPrice = lastTradedPrice * (1 - lowerCircuitPercent)
+                upperCircuitPrice = lastTradedPrice * (1 + upperCircuitPercent)
 
-            levels = int((upperCircuitPrice - lowerCircuitPrice) * actualPricePrecision) + 1
-            orderBook = OrderBook(levels, socketio, redisClient)
-            retrieveAndTraverseOrders(orderBook)
+                levels = int((upperCircuitPrice - lowerCircuitPrice) * actualPricePrecision) + 1
+                orderBook = OrderBook(levels, socketio, redisClient)
+                retrieveAndTraverseOrders(orderBook)
 
-            # Start background thread for sending updates
-            if not hasattr(initializeStart, "threadStarted"):
-                thread = threading.Thread(target=sendOrderBookUpdates)
-                thread.daemon = True
-                thread.start()
-                initializeStart.threadStarted = True
-            
-            updateMongoFile = os.path.join(os.path.dirname(__file__), 'updateMongo.py')
-            subprocess.Popen(['python', updateMongoFile])
+                if not hasattr(initializeStart, "threadStarted"):
+                    thread = threading.Thread(target=sendOrderBookUpdates)
+                    thread.daemon = True
+                    thread.start()
+                    initializeStart.threadStarted = True
+                
+                updateMongoFile = os.path.join(os.path.dirname(__file__), 'updateMongo.py')
+                subprocess.Popen(['python', updateMongoFile])
 
-            initializeStart.initialized = True
+                initializeStart.initialized = True
+
+            except Exception as e:
+                print(f"An error occurred during initialization: {e}")
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
