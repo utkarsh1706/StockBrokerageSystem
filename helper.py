@@ -6,8 +6,6 @@ import json
 def checkValid(price, quantity, minOrderValue, side):
     if quantity <=0:
         return False, "Invalid Quantity"
-    if side!=1 and side!=-1:
-        return False, "Invalid Side"
     if (price >= upperCircuit or price <= lowerCircuit):
         return False, "Kindly place order within the circuit range!"
     if price*quantity < minOrderValue:

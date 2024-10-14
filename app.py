@@ -47,7 +47,12 @@ def placeOrderAPI():
     if not data or 'quantity' not in data or 'price' not in data or 'side' not in data:
         return jsonify({"error": "Invalid data"}), 400
 
-    side = "SELL" if data['side'] == 1 else "BUY"
+    if data['side'] == 1:
+        side = "SELL"
+    elif data['side'] == -1:
+        side = "BUY"
+    else:
+        return jsonify({"error": "Invalid Side"}), 400
     
     data['price'] = round(data['price'], pricePrecision)
 
@@ -175,7 +180,7 @@ def initializeStart():
                 initializeStart.threadStarted = True
             
             updateMongoFile = os.path.join(os.path.dirname(__file__), 'updateMongo.py')
-            # subprocess.Popen(['python3', updateMongoFile])
+            subprocess.Popen(['python', updateMongoFile])
 
             initializeStart.initialized = True
 

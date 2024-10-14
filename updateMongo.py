@@ -5,6 +5,8 @@ from mongoengine import connect
 import redis
 from dotenv import load_dotenv
 import os
+from constants import *
+from schema import OrderSide, OrderStatus
 
 load_dotenv()
 
@@ -12,7 +14,7 @@ mongoURI = os.getenv("mongoURI")
 
 connect(db="StockBrokerSystem", host = mongoURI)
 
-redisClient = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
+redisClient = redis.Redis(host=redisHost, port=redisPort, password=redisPassword)
 
 def updateTrades():
 
@@ -39,34 +41,47 @@ def updateOrders():
     for orderKey in keys:
         orderData = redisClient.hgetall(orderKey)
         if orderData:
+            # Decode both keys and values
+            orderData = {k.decode('utf-8'): v.decode('utf-8') for k, v in orderData.items()}
             oid = orderData['oid']
+            price = float(orderData['price'])
+            quantity = float(orderData['quantity'])
+            filledQuantity = float(orderData['filledQuantity'])
+            averagePrice = float(orderData['averagePrice'])
+            placedTimestamp = int(orderData['placedTimestamp'])
+            lastUpdatesTimestamp = int(orderData['lastUpdatesTimestamp'])
+            status = OrderStatus(orderData['status'])
+            side = OrderSide(orderData['side'])
+            clientOrderId = orderData['clientOrderId']
             
+            # Check if the order exists in MongoDB
             existingOrder = Orders.objects(oid=oid).first()
             
             if existingOrder:
                 # Update existing order
                 existingOrder.update(
-                    price=float(orderData['price']),
-                    quantity=float(orderData['quantity']),
-                    filledQuantity=float(orderData['filledQuantity']),
-                    averagePrice=float(orderData['averagePrice']),
-                    lastUpdatesTimestamp=int(orderData['lastUpdatesTimestamp']),
-                    status=orderData['status'],
-                    side=orderData['side']
+                    price=price,
+                    quantity=quantity,
+                    filledQuantity=filledQuantity,
+                    averagePrice=averagePrice,
+                    lastUpdatesTimestamp=lastUpdatesTimestamp,
+                    status=status,
+                    side=side
                 )
+                print(f"Updated order: {oid}")
             else:
                 # Create a new order if it doesn't exist
                 newOrder = Orders(
                     oid=oid,
-                    price=float(orderData['price']),
-                    quantity=float(orderData['quantity']),
-                    filledQuantity=float(orderData['filledQuantity']),
-                    averagePrice=float(orderData['averagePrice']),
-                    placedTimestamp=int(orderData['placedTimestamp']),
-                    lastUpdatesTimestamp=int(orderData['lastUpdatesTimestamp']),
-                    status=orderData['status'],
-                    side=orderData['side'],
-                    clientOrderId=orderData['clientOrderId']
+                    price=price,
+                    quantity=quantity,
+                    filledQuantity=filledQuantity,
+                    averagePrice=averagePrice,
+                    placedTimestamp=placedTimestamp,
+                    lastUpdatesTimestamp=lastUpdatesTimestamp,
+                    status=status,
+                    side=side,
+                    clientOrderId=clientOrderId
                 )
                 newOrder.save()
                 print(f"Saved new order: {newOrder.oid}")
@@ -76,7 +91,7 @@ def main():
         print("Updating MongoDB")
         updateTrades()
         updateOrders()
-        time.sleep(60)
+        time.sleep(30)
 
 if __name__ == "__main__":
     main()
