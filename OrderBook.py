@@ -34,17 +34,24 @@ class OrderBook:
     
     def placeOrder(self, price, quantity, oid, side):
         with self.lock:
-            if side == "SELL":
-                idx = int((upperCircuit - price) * actualPricePrecision)
-                self._updateOrderMap(self.orderMapAsk, price, quantity)
-                newNode = self.doubleLLAsk[idx].append(oid, quantity)
-            else:
-                idx = int((price - lowerCircuit) * actualPricePrecision)
-                self._updateOrderMap(self.orderMapBid, price, quantity)
-                newNode = self.doubleLLBid[idx].append(oid, quantity)
-            
-            self.orderNode[oid] = newNode
-        return
+            try:
+                if side == "SELL":
+                    idx = int((upperCircuit - price) * actualPricePrecision)
+                    self._updateOrderMap(self.orderMapAsk, price, quantity)
+                    newNode = self.doubleLLAsk[idx].append(oid, quantity)
+                else:
+                    idx = int((price - lowerCircuit) * actualPricePrecision)
+                    self._updateOrderMap(self.orderMapBid, price, quantity)
+                    newNode = self.doubleLLBid[idx].append(oid, quantity)
+
+                self.orderNode[oid] = newNode
+                
+            except KeyError as e:
+                print(f"Key error: {e}. Order ID {oid} might not exist.")
+            except ValueError as e:
+                print(f"Value error: {e}. Invalid price or quantity.")
+            except Exception as e:
+                print(f"An unexpected error occurred while placing order {oid}: {e}")
 
     def emitTrade(self, price, fillQuantity, bidID, askID):
         
@@ -65,33 +72,47 @@ class OrderBook:
     
     def getAllTrades(self):
         with self.lock:
-            data = [json.loads(item) for item in self.redisClient.lrange('tradeData', 0, -1)]
-            return data
+            try:
+                data = [json.loads(item) for item in self.redisClient.lrange('tradeData', 0, -1)]
+                return data
+                
+            except json.JSONDecodeError as e:
+                print(f"JSON decode error: {e}. Failed to decode trade data.")
+                return []
+            except Exception as e:
+                print(f"An unexpected error occurred while retrieving trades: {e}")
+                return []
     
     def processOrder(self, askOrder, bidOrder, fillQuantity):
-        price = bidOrder.price if askOrder.lastUpdatesTimestamp > bidOrder.lastUpdatesTimestamp else bidOrder.price
-        
-        askOrder.filledQuantity += fillQuantity
-        bidOrder.filledQuantity += fillQuantity
-        
-        askOrder.averagePrice = round(((askOrder.averagePrice * (askOrder.filledQuantity - fillQuantity)) + (price * fillQuantity)) / askOrder.filledQuantity, 2)
-        bidOrder.averagePrice = round(((bidOrder.averagePrice * (bidOrder.filledQuantity - fillQuantity)) + (price * fillQuantity)) / bidOrder.filledQuantity, 2)
-        
-        if askOrder.filledQuantity == askOrder.quantity:
-            askOrder.status = "FILLED"
-            askOrder.lastUpdatesTimestamp = int(time.time())
-        else:
-            askOrder.status = "PARTIALLY FILLED"
+        try:
+            price = bidOrder.price if askOrder.lastUpdatesTimestamp > bidOrder.lastUpdatesTimestamp else bidOrder.price
+            
+            askOrder.filledQuantity += fillQuantity
+            bidOrder.filledQuantity += fillQuantity
+            
+            askOrder.averagePrice = round(((askOrder.averagePrice * (askOrder.filledQuantity - fillQuantity)) + (price * fillQuantity)) / askOrder.filledQuantity, 2)
+            bidOrder.averagePrice = round(((bidOrder.averagePrice * (bidOrder.filledQuantity - fillQuantity)) + (price * fillQuantity)) / bidOrder.filledQuantity, 2)
+            
+            if askOrder.filledQuantity == askOrder.quantity:
+                askOrder.status = "FILLED"
+                askOrder.lastUpdatesTimestamp = int(time.time())
+            else:
+                askOrder.status = "PARTIALLY FILLED"
 
-        if bidOrder.filledQuantity == bidOrder.quantity:
-            bidOrder.status = "FILLED"
-            bidOrder.lastUpdatesTimestamp = int(time.time())
-        else:
-            bidOrder.status = "PARTIALLY FILLED"
+            if bidOrder.filledQuantity == bidOrder.quantity:
+                bidOrder.status = "FILLED"
+                bidOrder.lastUpdatesTimestamp = int(time.time())
+            else:
+                bidOrder.status = "PARTIALLY FILLED"
 
-        self.emitTrade(price, fillQuantity, bidOrder.oid, askOrder.oid)
-        self.addOrderRedis(askOrder.oid, askOrder)
-        self.addOrderRedis(bidOrder.oid, bidOrder)
+            self.emitTrade(price, fillQuantity, bidOrder.oid, askOrder.oid)
+            self.addOrderRedis(askOrder.oid, askOrder)
+            self.addOrderRedis(bidOrder.oid, bidOrder)
+            
+        except ZeroDivisionError as e:
+            print(f"Zero division error: {e}. Check the filled quantities.")
+        except Exception as e:
+            print(f"An unexpected error occurred while processing order: {e}")
 
         return
 
@@ -103,6 +124,9 @@ class OrderBook:
                 bestBidPrice, bestBidQuantity = next(iteratorBid)
                 bestAskPrice, bestAskQuantity = next(iteratorAsk)
             except StopIteration:
+                return
+            except Exception as e:
+                print(f"An error occurred while initializing iterators: {e}")
                 return
 
             while bestBidPrice is not None and bestAskPrice is not None and bestBidPrice >= bestAskPrice:
@@ -116,7 +140,10 @@ class OrderBook:
                     fillQuantity = min(bidOrder.quantity - bidOrder.filledQuantity, askOrder.quantity - askOrder.filledQuantity)
 
                     # Process the order and update the quantities
-                    self.processOrder(askOrder, bidOrder, fillQuantity)
+                    try:
+                        self.processOrder(askOrder, bidOrder, fillQuantity)
+                    except Exception as e:
+                        print(f"Error processing order: {e}")
                     bestAskQuantity -= fillQuantity
                     bestBidQuantity -= fillQuantity
 
@@ -154,45 +181,59 @@ class OrderBook:
 
     def cancelOrder(self, price, unfilledQuantity, oid, side):
         with self.lock:
-            nodePointer = self.orderNode[oid]
-            del self.orderNode[oid]
-            
-            if side == "SELL":
-                self.orderMapAsk[price] -= unfilledQuantity
-                idx = int((upperCircuit - price) * actualPricePrecision)
-                self.doubleLLAsk[idx].remove(nodePointer)
-                self._removeOrderIfZero(self.orderMapAsk, price)
-            else:
-                self.orderMapBid[price] -= unfilledQuantity
-                idx = int((price - lowerCircuit) * actualPricePrecision)
-                self.doubleLLBid[idx].remove(nodePointer)
-                self._removeOrderIfZero(self.orderMapBid, price)
-        return
+            try:
+                nodePointer = self.orderNode[oid]
+                del self.orderNode[oid]
+                
+                if side == "SELL":
+                    self.orderMapAsk[price] -= unfilledQuantity
+                    idx = int((upperCircuit - price) * actualPricePrecision)
+                    self.doubleLLAsk[idx].remove(nodePointer)
+                    self._removeOrderIfZero(self.orderMapAsk, price)
+                else:
+                    self.orderMapBid[price] -= unfilledQuantity
+                    idx = int((price - lowerCircuit) * actualPricePrecision)
+                    self.doubleLLBid[idx].remove(nodePointer)
+                    self._removeOrderIfZero(self.orderMapBid, price)
+                    
+            except KeyError as e:
+                print(f"Key error: {e}. Order ID {oid} might not exist.")
+            except ValueError as e:
+                print(f"Value error: {e}. Invalid price or quantity.")
+            except Exception as e:
+                print(f"An unexpected error occurred while canceling order {oid}: {e}")
 
     def modifyOrder(self, initialPrice, updatePrice, unfilledQuantity, side, oid):
         with self.lock:
-            nodePointer = self.orderNode[oid]
-            
-            if side == "SELL":
-                self.orderMapAsk[initialPrice] -= unfilledQuantity
-                self._updateOrderMap(self.orderMapAsk, updatePrice, unfilledQuantity)
-                idx = int((upperCircuit - initialPrice) * actualPricePrecision)
-                self.doubleLLAsk[idx].remove(nodePointer)
-                idx = int((upperCircuit - updatePrice) * actualPricePrecision)
-                newNode = self.doubleLLAsk[idx].append(oid, unfilledQuantity)
-                self._removeOrderIfZero(self.orderMapAsk, initialPrice)
-            else:
-                self.orderMapBid[initialPrice] -= unfilledQuantity
-                self._updateOrderMap(self.orderMapBid, updatePrice, unfilledQuantity)
-                idx = int((initialPrice - lowerCircuit) * actualPricePrecision)
-                self.doubleLLBid[idx].remove(nodePointer)
-                idx = int((updatePrice - lowerCircuit) * actualPricePrecision)
-                newNode = self.doubleLLBid[idx].append(oid, unfilledQuantity)
-                self._removeOrderIfZero(self.orderMapBid, initialPrice)
+            try:
+                nodePointer = self.orderNode[oid]
+                
+                if side == "SELL":
+                    self.orderMapAsk[initialPrice] -= unfilledQuantity
+                    self._updateOrderMap(self.orderMapAsk, updatePrice, unfilledQuantity)
+                    idx = int((upperCircuit - initialPrice) * actualPricePrecision)
+                    self.doubleLLAsk[idx].remove(nodePointer)
+                    idx = int((upperCircuit - updatePrice) * actualPricePrecision)
+                    newNode = self.doubleLLAsk[idx].append(oid, unfilledQuantity)
+                    self._removeOrderIfZero(self.orderMapAsk, initialPrice)
+                else:
+                    self.orderMapBid[initialPrice] -= unfilledQuantity
+                    self._updateOrderMap(self.orderMapBid, updatePrice, unfilledQuantity)
+                    idx = int((initialPrice - lowerCircuit) * actualPricePrecision)
+                    self.doubleLLBid[idx].remove(nodePointer)
+                    idx = int((updatePrice - lowerCircuit) * actualPricePrecision)
+                    newNode = self.doubleLLBid[idx].append(oid, unfilledQuantity)
+                    self._removeOrderIfZero(self.orderMapBid, initialPrice)
 
-            self.orderNode[oid] = newNode
-        return
-    
+                self.orderNode[oid] = newNode
+                
+            except KeyError as e:
+                print(f"Key error: {e}. Order ID {oid} might not exist.")
+            except ValueError as e:
+                print(f"Value error: {e}. Invalid price or quantity.")
+            except Exception as e:
+                print(f"An unexpected error occurred while modifying order {oid}: {e}")
+
     def getOrderInfo(self, oid):
         order = self.orderInfo.get(oid)
         return order

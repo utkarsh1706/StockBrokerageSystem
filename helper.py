@@ -19,6 +19,10 @@ def generateTradeID():
     return trade_id
 
 def addTradeRedis(redisClient, data):
-    jsonData = json.dumps(data)    
-    redisClient.rpush("tradeData", jsonData)
-    return
+    try:
+        jsonData = json.dumps(data)    
+        redisClient.rpush("tradeData", jsonData)
+    except json.JSONDecodeError as e:
+        print(f"Error encoding data to JSON: {e}")
+    except Exception as e:
+        print(f"Error adding trade data to Redis: {e}")
