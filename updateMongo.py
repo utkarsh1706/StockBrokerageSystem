@@ -50,8 +50,8 @@ def updateOrders():
             averagePrice = float(orderData['averagePrice'])
             placedTimestamp = int(orderData['placedTimestamp'])
             lastUpdatesTimestamp = int(orderData['lastUpdatesTimestamp'])
-            sideStr = orderData['side'].split('.')[-1] 
-            statusStr = orderData['status'].split('.')[-1]
+            sideStr = orderData['side'] 
+            statusStr = orderData['status'].replace(' ', '_')
             status = OrderStatus[statusStr]
             side = OrderSide[sideStr]
             clientOrderId = orderData['clientOrderId']
