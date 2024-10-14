@@ -1,7 +1,7 @@
 from schema import Trade, Orders
 import json
 import time
-from mongoengine import connect, ConnectionError, DoesNotExist, ValidationError
+from mongoengine import connect, DoesNotExist, ValidationError
 import redis
 from dotenv import load_dotenv
 import os
@@ -15,10 +15,7 @@ redisPassword = os.getenv("redisPassword")
 redisHost = os.getenv("redisHost")
 redisPort = os.getenv("redisPort")
 
-try:
-    connect(db="StockBrokerSystem", host=mongoURI)
-except ConnectionError as e:
-    print(f"Error connecting to the database: {e}")
+connect(db="StockBrokerSystem", host=mongoURI)
 
 try:
     redisClient = redis.Redis(host=redisHost, port=redisPort, password=redisPassword)
