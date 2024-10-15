@@ -255,15 +255,16 @@ class OrderBook:
     
     def getOrderBookData(self):
 
-        bestBids = list(self.orderMapBid.items())[:5]
-        bestAsks = list(self.orderMapAsk.items())[:5]
+        with self.lock:
+            bestBids = list(self.orderMapBid.items())[:5]
+            bestAsks = list(self.orderMapAsk.items())[:5]
 
-        bids = [[price, quantity] for price, quantity in bestBids]  # Highest bids first
+            bids = [[price, quantity] for price, quantity in bestBids]  # Highest bids first
 
-        asks = [[price, quantity] for price, quantity in bestAsks]  # Lowest asks first
+            asks = [[price, quantity] for price, quantity in bestAsks]  # Lowest asks first
 
-        # Return as a dictionary
-        return {
-            "asks": asks,
-            "bids": bids
-        }
+            # Return as a dictionary
+            return {
+                "asks": asks,
+                "bids": bids
+            }
