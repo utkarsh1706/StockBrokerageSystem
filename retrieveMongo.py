@@ -5,6 +5,7 @@ def retrieveAndTraverseOrders(orderBook):
     try:
         print("Retrieving Data from MongoDB")
         orders = Orders.objects.order_by('placedTimestamp')
+        print(orders)
         
         for order in orders:
             try:
