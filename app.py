@@ -180,7 +180,7 @@ def initializeStart():
                     initializeStart.threadStarted = True
                 
                 updateMongoFile = os.path.join(os.path.dirname(__file__), 'updateMongo.py')
-                subprocess.Popen(['python', updateMongoFile])
+                # subprocess.Popen(['python', updateMongoFile])
 
                 initializeStart.initialized = True
 
