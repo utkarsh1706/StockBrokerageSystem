@@ -4,17 +4,9 @@
     {
       "src": "app.py",
       "use": "@vercel/python"
-    },
-    {
-      "src": "api/update.py",
-      "use": "@vercel/python"
     }
   ],
   "routes": [
-    {
-      "src": "/api/update",
-      "dest": "api/update.py"
-    },
     {
       "src": "/(.*)",
       "dest": "app.py"
